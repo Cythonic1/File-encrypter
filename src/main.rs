@@ -1,8 +1,10 @@
 use std::fs::File;
 use std::process;
 use std::env;
+mod encryption;
 fn main(){ 
 
+    encryption::rsa_algo::encrypted();
     let args:Vec<String> = env::args().collect();
     if args.len() < 2{
         eprintln!("usage: {} fileName", args[0]);
