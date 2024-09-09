@@ -3,10 +3,12 @@ use rsa::{PublicKey, RsaPrivateKey, RsaPublicKey, PaddingScheme};
 use rsa::pkcs1::ToRsaPrivateKey; // Add this import for PKCS#1
 use rsa::pkcs1::ToRsaPublicKey; // Import this for public key PEM
 use rand::rngs::OsRng;
-
-pub fn encrypted() {
+use std::fs;
+pub fn encrypted(file_name : &String) {
     // Use OsRng for cryptographic randomness
+    println!("The file is {}", file_name);
     let mut rng = OsRng;
+    let file_content = fs::read(file_name).expect("make sure from the file name");
     
     let bits = 2048;
     let priv_key = RsaPrivateKey::new(&mut rng, bits).expect("Failed to create priv_key");
@@ -19,11 +21,10 @@ pub fn encrypted() {
     println!("The public key in PEM format:\n{:#?}", pub_key_pem);
     println!("The private key in PEM format:\n{:#?}", priv_key_pem);
 
-    let data = b"Hello World";
 
     // Encrypt the data
     let enc_data = pub_key
-        .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), &data[..])
+        .encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), &file_content[..])
         .expect("Failed to encrypt");
     println!("The encrypted data is: {:?}", enc_data);
 

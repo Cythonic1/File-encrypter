@@ -6,3 +6,8 @@ edition = "2021"
 [dependencies]
 rsa = "0.5.0"
 rand = "0.8"
+aes = "0.7"          # Or the latest version
+block-modes = "0.8"  # Or the latest version
+block-padding = "0.2" # For padding
+clap = "4.5.17"  # Check for the latest version on crates.io
+hex = "0.4"
