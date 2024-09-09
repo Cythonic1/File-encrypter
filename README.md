@@ -1,3 +1,3 @@
-A very simple File crater in Rust and looking for improve it overtime.
-Compile : rustc main.ru
-usage : ./main <filename>
+A very simple File crater in Rust and looking for improve it overtime.<br>
+Compile : rustc main.rs<br>
+usage : ./main <filename> <br>
