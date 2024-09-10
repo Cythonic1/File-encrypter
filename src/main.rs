@@ -1,78 +1,107 @@
-// TODO : Implement the command line argumrnts managment 
+// TODO : Implement the command line argumrnts managment  : Done
 // TODO : make sure the encryption works fine.
 // TODO : Implement RSA too.
+
+use clap::{arg, command, value_parser};
 use std::fs;
-use std::env;
+use std::path::PathBuf;
 mod encryption;
-use std::process;
+
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        help();
-        process::exit(1);
+    // Define the command-line arguments using clap
+    let mut cmd = command!()
+        .arg(
+            arg!(-a --aes_256 <FILE> "AES-256 encryption with input file")
+                .required(false)
+                .value_parser(value_parser!(PathBuf))
+        )
+        .arg(
+            arg!(-r --rsa <FILE> "RSA encryption with input file")
+                .required(false)
+                .value_parser(value_parser!(PathBuf))
+        )
+        .arg(
+            arg!(-o --output <FILE> "Output file for encryption")
+                .required(false)
+                .value_parser(value_parser!(PathBuf))
+        )
+        .arg(
+            arg!(-f --file <FILE_NAME> "Create a new file")
+                .required(false)
+                .value_parser(value_parser!(String))
+        ).arg(
+            arg!(-k --key <hex_key> "hex key")
+                .required(false)
+                .value_parser(value_parser!(String))
+                .help("Must when decrypt") 
+        ).arg (
+            arg!(-d --aes_256_decrypyion <FILE> "AES-256 decryption file")
+                .required(false)
+                .value_parser(value_parser!(PathBuf))
+        );
+
+    let matches = cmd.clone().get_matches();
+
+    // Ensure the user entered some arguments
+    if !(matches.contains_id("aes_256")
+        || matches.contains_id("rsa")
+        || matches.contains_id("output")
+        || matches.contains_id("file"))
+    {
+        eprintln!("Error: You must specify at least one argument.");
+        cmd.print_help().unwrap();  // Print the help message
+        std::process::exit(1);
     }
 
-    let mut output: Option<&String> = None; // Initialize to store the output file path
+    // Check for dependency: if AES-256 is specified, output must also be provided
+    if matches.contains_id("aes_256") && !matches.contains_id("output") {
+        eprintln!("Error: The '-a/--aes_256' argument requires '-o/--output'.");
+        cmd.print_help().unwrap();  // Print the help message
+        std::process::exit(1);
+    }
 
-    for (index, arg) in args.iter().enumerate() {
-        
-        if arg == "-r" {
-            if index + 1 < args.len() {
-                println!("You want RSA encryption");
-                encryption::rsa_algo::encrypted(&args[index + 1]);
-                process::exit(1);
-            } else {
-                eprintln!("Missing argument for -r");
-                help();
-                process::exit(1);
-            }
-        } else if arg == "-f" {
-            if index + 1 < args.len() {
-                println!("So you want to create a File");
-                match fs::File::create(&args[index + 1]) {
-                    Ok(_) => println!("The file has been created"),
-                    Err(e) => eprintln!("Something went wrong: {}", e),
-                }
-                process::exit(1);
-            } else {
-                eprintln!("Missing argument for -f");
-                help();
-                process::exit(1);
-            }
-        } else if arg == "-a" {
-            // Check if user provided the output file
-            if let Some(out) = output {
-                if index + 1 < args.len() {
-                    println!("You want AES-256 encryption");
-                    encryption::aes_256_algo::encrypted(&args[index + 1], out);
-                    process::exit(1);
-                } else {
-                    eprintln!("Missing argument for -a");
-                    help();
-                    process::exit(1);
-                }
-            } else {
-                eprintln!("Error: You must specify an output file with -o when using AES encryption (-a)");
-                process::exit(1);
-            }
-        } else if arg == "-o" {
-            // Save the output file for later use with -a
-            if index + 1 < args.len() {
-                output = Some(&args[index + 1]);
-            } else {
-                eprintln!("Missing argument for -o");
-                process::exit(1);
-            }
-        } else if arg == "-h" || arg == "-help" {
-            help();
-            process::exit(1);
+    if matches.contains_id("aes_256_decrypyion") && (!matches.contains_id("key") || !matches.contains_id("output")){
+        eprintln!("Please Enter the -o <FILE> -k <Key> ");
+        cmd.print_help().unwrap();
+        std::process::exit(1);
+    } 
+    // Commented Until compelte implemntation
+    //// Example usage of the matches
+    //if let Some(aes_file) = matches.get_one::<PathBuf>("aes_256") {
+    //    println!("You want AES-256 encryption with file: {:?}", aes_file);
+    //    if let Some(output_file) = matches.get_one::<PathBuf>("output") {
+    //        println!("Output file for AES-256 encryption: {:?}", output_file);
+    //        // encryption::aes_256_algo::encrypted(aes_file, output_file);
+    //    }
+    //}
+
+    if let Some(aes_file) = matches.get_one::<PathBuf>("aes_256") {
+        println!("You want RSA encryption with file: {:?}", aes_file);
+        if let Some(aes_output) = matches.get_one::<PathBuf>("output"){
+            println!("Am here");
+            encryption::aes_256_algo::encrypted(aes_file, aes_output);
+        }        
+    }
+
+    if let Some(file_name) = matches.get_one::<String>("file") {
+        println!("Creating file: {:?}", file_name);
+        match fs::File::create(file_name) {
+            Ok(_) => println!("File created successfully."),
+            Err(e) => eprintln!("Error creating file: {}", e),
         }
     }
-}
 
-fn help() {
-    let menu: String = String::from("Usage toucher <arguments> \n -r <path> RSA Encryption \n -f <file_name> create file \n -a <file_path> AES-256 encryption (requires -o <output_file>)");
-    println!("Menu \n {:#}", menu);
+    if let Some(aes_256_decrypyion) = matches.get_one::<PathBuf>("aes_256_decrypyion"){
+         if let Some(key) = matches.get_one::<String>("key"){
+                println!("You have the key");
+                if let Some(output_file) = matches.get_one::<PathBuf>("output") {
+                    println!("Output file for AES-256 encryption: {:?}", output_file);
+                    encryption::aes_256_algo::decrypted(aes_256_decrypyion, output_file, key);
+                }
+            }
+
+    }
+
 }
 

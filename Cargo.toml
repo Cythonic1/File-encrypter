@@ -9,5 +9,5 @@ rand = "0.8"
 aes = "0.7"          # Or the latest version
 block-modes = "0.8"  # Or the latest version
 block-padding = "0.2" # For padding
-clap = "4.5.17"  # Check for the latest version on crates.io
+clap = { version = "4.0", features = ["derive", "cargo"] }
 hex = "0.4"
